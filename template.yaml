@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  KoH_service_reg
+  
+  Sample SAM Template for KoH_service_reg
+
+Parameters:
+  Env:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+    Description: Environment in which the application will be deployed. Allowed values [dev, prod]
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  RegFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "KoH_${Env}_reg"
+      CodeUri: ./
+      Handler: main
+      Runtime: go1.x
+      Role: arn:aws:iam::763636035052:role/service-role/lambda-in-go-lang-executor
+      Architectures:
+        - x86_64
+      Events:
+        Register:
+          Type: HttpApi 
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /register
+            Method: POST
+      Environment: 
+        Variables:
+          PARAM1: VALUE
+    Metadata:
+      BuildMethod: makefile
+  HttpApi:
+      Type: AWS::Serverless::HttpApi
+      Properties:
+        StageName: !Ref Env
+
+Outputs:
+  RegAPI:
+    Description: "API Gateway endpoint URL for Prod environment for First Function"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Env}/"
+  RegisterFunction:
+    Description: "KoH reg function"
+    Value: !GetAtt RegFunction.Arn
