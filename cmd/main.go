@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"service-reg/pkg/handlers"
+	"service-reg/pkg/model"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -14,23 +16,22 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+func handler(req events.APIGatewayV2HTTPRequest) (*events.APIGatewayV2HTTPResponse, error) {
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-
 	reqJson, _ := json.Marshal(req)
-	log.Debug().Msg(string(reqJson))
-
 	log.Info().RawJSON("Raw json", reqJson).Msg("Raw json")
 
-	return apiResponse(http.StatusAccepted, "Registered successfully")
-}
+	switch req.RequestContext.RouteKey {
+	case "POST /register":
+		user := model.User{}
+		_ = json.Unmarshal([]byte(req.Body), &user)
 
-func apiResponse(status int, body interface{}) (*events.APIGatewayProxyResponse, error) {
-	resp := events.APIGatewayProxyResponse{Headers: map[string]string{"Content-Type": "application/json"}}
-	resp.StatusCode = status
-
-	stringBody, _ := json.Marshal(body)
-	resp.Body = string(stringBody)
-	return &resp, nil
+		u, err := handlers.Register(&user)
+		if err != nil {
+			return handlers.ApiResponseError(http.StatusBadRequest, err)
+		}
+		return handlers.ApiResponse(http.StatusAccepted, u)
+	}
+	return handlers.UnhandledMethod()
 }
