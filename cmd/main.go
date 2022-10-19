@@ -16,6 +16,10 @@ func main() {
 	lambda.Start(handler)
 }
 
+type ErrorBody struct {
+	ErrorMsg string `json:"error,omitempty"`
+}
+
 func handler(req events.APIGatewayV2HTTPRequest) (*events.APIGatewayV2HTTPResponse, error) {
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -29,7 +33,7 @@ func handler(req events.APIGatewayV2HTTPRequest) (*events.APIGatewayV2HTTPRespon
 
 		u, err := handlers.Register(&user)
 		if err != nil {
-			return handlers.ApiResponseError(http.StatusBadRequest, err)
+			return handlers.ApiResponse(http.StatusBadRequest, ErrorBody{err.Error()})
 		}
 		return handlers.ApiResponse(http.StatusAccepted, u)
 	}

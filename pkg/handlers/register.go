@@ -48,19 +48,17 @@ func getDb() *dynamodb.DynamoDB {
 }
 
 func storeUser(user *model.User) (*model.User, error) {
-	// userjson, _ := json.Marshal(user)
-	// log.Debug().Msg(string(userjson))
 	userAttributes, err := dynamodbattribute.MarshalMap(user)
 	if err != nil {
-		log.Fatal().Msgf("Got error marshalling user: %s", err)
+		log.Panic().Msgf("Got error marshalling user: %s", err)
 		return user, err
 	}
 	userUniqueLoginKeyAttributes, err := dynamodbattribute.MarshalMap(map[string]string{
 		"id":    "login#" + user.Login,
-		"login": user.Login,
+		"login": "login#" + user.Login,
 	})
 	if err != nil {
-		log.Fatal().Msgf("Got error marshalling user: %s", err)
+		log.Panic().Msgf("Got error marshalling user: %s", err)
 		return user, err
 	}
 
